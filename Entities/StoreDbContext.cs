@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ShoesStore.Entities.Models;
+using Microsoft.AspNetCore.Identity;
 using Bogus;
 
 namespace ShoesStore.Entities;
@@ -10,70 +11,6 @@ public class StoreDBContext(DbContextOptions<StoreDBContext> options) : DbContex
     public DbSet<Vendor> Vendors { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<Media> Media { get; set; }
-
-
-    public void UsersSeed(StoreDBContext context)
-
-
-    {
-
-        for (int i = 0; i < 10; i++)
-        {
-            var userFaker = new Faker<User>()
-            .StrictMode(false).Rules((faker, user) =>
-            {
-                user.Username = faker.Internet.UserName();
-                user.CreatedAt = DateTime.Now;
-
-
-            });
-            var newUser = userFaker.Generate();
-            context.Users.Add(newUser);
-
-
-        }
-
-        context.SaveChanges();
-
-
-
-
-
-
-    }
-    public void VendorsSeed()
-    {
-        var userFaker = new Faker<Vendor>()
-        .StrictMode(false).Rules((faker, vendor) =>
-        {
-            vendor.VendorUuid = faker.Random.Uuid().ToString();
-            vendor.Name = faker.Company.CompanyName();
-
-
-        });
-
-
-    }
-    public void ProductsSeed(StoreDBContext context)
-    {
-        var userFaker = new Faker<Product>()
-        .StrictMode(false).Rules(async (faker, product) =>
-
-        {
-            var Vendors = await context.Vendors.ToListAsync();
-            product.ProductUuid = faker.Random.Uuid().ToString();
-            product.Title = faker.Commerce.ProductName();
-            product.Description = faker.Commerce.ProductDescription();
-            product.Vendor = faker.PickRandom<Vendor>(Vendors);
-
-
-
-
-        });
-
-
-    }
-
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -95,6 +32,120 @@ public class StoreDBContext(DbContextOptions<StoreDBContext> options) : DbContex
         .HasIndex(v => v.VendorUuid)
         .IsUnique();
     }
+
+
+    public void UserAdminSeed(StoreDBContext context)
+    {
+        try
+        {
+            var admin = context.Users.Where(user => user.Username == "admin");
+
+            Console.WriteLine("admin already exists");
+
+        }
+        catch (Exception e)
+        {
+            if (e is ArgumentNullException)
+            {
+                var newAdmin = new User { Username = "admin", Password = "admin", Role = "admin" };
+                context.Users.Add(newAdmin);
+                context.SaveChanges();
+            }
+        }
+
+    }
+
+    public void VendorsSeed(StoreDBContext context)
+    {
+        List<Vendor> newVendors = [];
+        for (int i = 0; i < 5; i++)
+        {
+            var vendorFaker = new Faker<Vendor>()
+            .StrictMode(false).Rules((faker, vendor) =>
+            {
+                vendor.VendorUuid = faker.Random.Uuid().ToString();
+                vendor.Name = faker.Company.CompanyName();
+
+
+            });
+
+            Vendor newVendor = vendorFaker.Generate();
+            newVendors.Add(newVendor);
+
+        }
+
+        context.Vendors.AddRange(newVendors);
+
+        context.SaveChanges();
+
+
+    }
+    public void ProductsSeed(StoreDBContext context)
+    {
+        List<Product> newProducts = [];
+        for (int i = 0; i < 20; i++)
+        {
+            var productFaker = new Faker<Product>()
+            .StrictMode(false).Rules((faker, product) =>
+
+            {
+                var vendors = context.Vendors.ToList();
+                product.ProductUuid = faker.Random.Uuid().ToString();
+                product.Title = faker.Commerce.ProductName();
+                product.Description = faker.Commerce.ProductDescription();
+                product.Vendor = faker.PickRandom<Vendor>(vendors);
+
+
+
+
+            });
+
+            Product newProduct = productFaker.Generate();
+            newProducts.Add(newProduct);
+
+
+        }
+
+        context.Products.AddRange(newProducts);
+
+        context.SaveChanges();
+
+
+    }
+
+    public void MediaSeed(StoreDBContext context)
+    {
+        List<Media> newMedias = [];
+        var products = context.Products.ToList();
+        for (int i = 0; i < products.Count; i++)
+        {
+            var mediaFaker = new Faker<Media>()
+                    .StrictMode(false)
+                    .Rules((faker, media) =>
+                    {
+
+                        media.Path = faker.Image.PicsumUrl();
+                        media.Product = products[i];
+                    });
+
+            Media firstMedia = mediaFaker.Generate();
+            Media secondMedia = mediaFaker.Generate();
+
+            newMedias.AddRange([firstMedia, secondMedia]);
+        }
+
+        context.Media.AddRange(newMedias);
+        context.SaveChanges();
+
+
+
+
+
+    }
+
+
+
+
 }
 
 

@@ -9,7 +9,7 @@ public class User
 
     public required string Password { get; set; }
 
-    public required DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     public DateTime? DeletedAt { get; set; } = null;
     public string? Role { get; set; } = null;

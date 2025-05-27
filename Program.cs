@@ -24,9 +24,11 @@ builder.Services
             Console.WriteLine(context);
             if (context is StoreDBContext storeContext)
             {
-                storeContext.UsersSeed(storeContext);
-                storeContext.VendorsSeed();
+                storeContext.UserAdminSeed(storeContext);
+                storeContext.VendorsSeed(storeContext);
                 storeContext.ProductsSeed(storeContext);
+                storeContext.MediaSeed(storeContext);
+
 
             }
             else

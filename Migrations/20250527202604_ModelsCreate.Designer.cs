@@ -11,7 +11,7 @@ using ShoesStore.Entities;
 namespace ShoesStore.Migrations
 {
     [DbContext(typeof(StoreDBContext))]
-    [Migration("20250527141411_ModelsCreate")]
+    [Migration("20250527202604_ModelsCreate")]
     partial class ModelsCreate
     {
         /// <inheritdoc />
