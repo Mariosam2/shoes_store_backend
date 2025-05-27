@@ -45,6 +45,8 @@ builder.Services
 
 });
 
+builder.Services.AddRazorPages();
+
 
 var app = builder.Build();
 
@@ -53,5 +55,7 @@ app.MapGet("/products", async (StoreDBContext context) =>
 {
     return await context.Products.ToListAsync();
 });
+
+app.MapRazorPages();
 
 app.Run();
