@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using ShoesStore.Entities;
 using ShoesStore.Entities.Models;
 using ShoesStore.Seeder;
-
+using Microsoft.OpenApi.Models;
 
 var storeAllowedOrigins = "_storeAllowedOrigins";
 
@@ -26,7 +26,18 @@ builder.Services
 
 });
 
+builder.Services.AddEndpointsApiExplorer();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSwaggerGen(c =>
+      {
+          c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shoes Store API", Description = "Store API", Version = "v1" });
+      });
+}
+
+
 builder.Services.AddRazorPages();
+
 
 builder.Services.AddCors((options) =>
 {
@@ -40,9 +51,22 @@ builder.Services.AddCors((options) =>
 
 var app = builder.Build();
 
-app.UseCors(storeAllowedOrigins);
 
-app.MapPost("/seed", async (StoreDBContext context) =>
+
+app.UseCors(storeAllowedOrigins);
+app.UseSwagger();
+
+app.UseSwaggerUI(c =>
+ {
+     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Store API V1");
+ });
+
+
+var apiRoutes = app.MapGroup("/api/v1");
+
+
+
+apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
 {
 
     try
@@ -104,9 +128,18 @@ app.MapPost("/seed", async (StoreDBContext context) =>
 
 });
 
-app.MapGet("/products", async (StoreDBContext context) =>
+var productsRoutes = apiRoutes.MapGroup("/products");
+
+productsRoutes.MapGet("/", async (StoreDBContext context) =>
 {
-    return await context.Products.ToListAsync();
+    return await context.Products.Select(p => new
+    {
+        p.ProductUuid,
+        p.Title,
+        p.Description,
+        Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
+        Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+    }).AsSplitQuery().ToListAsync();
 });
 
 app.MapRazorPages();
