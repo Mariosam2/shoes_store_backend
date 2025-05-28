@@ -18,14 +18,18 @@ public class StoreDBContext(DbContextOptions<StoreDBContext> options) : DbContex
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<User>()
-            .HasIndex(u => u.Username)
-            .IsUnique();
+        .HasIndex(u => u.Username)
+        .IsUnique();
 
 
 
         builder.Entity<Product>()
         .HasIndex(p => p.ProductUuid)
         .IsUnique();
+
+        builder.Entity<Product>()
+       .Property(p => p.Price)
+       .HasPrecision(3, 2);
 
 
 

@@ -9,7 +9,7 @@ using ShoesStore.Entities.Models;
 using ShoesStore.Seeder;
 using Microsoft.OpenApi.Models;
 
-var storeAllowedOrigins = "_storeAllowedOrigins";
+string storeAllowedOrigins = "_storeAllowedOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,10 +41,9 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddCors((options) =>
 {
-    options.AddPolicy(name: storeAllowedOrigins, (policy) =>
+    options.AddPolicy(name: storeAllowedOrigins, builder =>
     {
-        policy.WithOrigins("http://localhost:42000");
-
+        builder.WithOrigins("http://localhost:4200");
     });
 });
 
@@ -89,16 +88,16 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
 
         if (vendorsCount == 0 && productsCount == 0 && mediaCount == 0)
         {
-            seeder.VendorsSeed(context);
-            seeder.ProductsSeed(context);
-            seeder.MediaSeed(context);
+            await seeder.VendorsSeed(context);
+            await seeder.ProductsSeed(context);
+            await seeder.MediaSeed(context);
             var successResponse = new
             {
                 success = true,
                 message = "database seeded"
             };
 
-            return Results.Json(JsonConvert.SerializeObject(successResponse), statusCode: 201);
+            return Results.Json(successResponse, statusCode: 201);
 
         }
         else
@@ -111,7 +110,7 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
             };
 
 
-            return Results.Json(JsonConvert.SerializeObject(dbAlreadySeeded), statusCode: 200);
+            return Results.Json(dbAlreadySeeded, statusCode: 200);
 
         }
 
@@ -130,16 +129,78 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
 
 var productsRoutes = apiRoutes.MapGroup("/products");
 
-productsRoutes.MapGet("/", async (StoreDBContext context) =>
+productsRoutes.MapGet("/", async (StoreDBContext context, int page) =>
 {
-    return await context.Products.Select(p => new
+    try
     {
-        p.ProductUuid,
-        p.Title,
-        p.Description,
-        Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
-        Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
-    }).AsSplitQuery().ToListAsync();
+        int offset = page - 1;
+        var products = await context.Products.Where(p => p.ProductId > offset * 10).Select(p => new
+        {
+            p.ProductUuid,
+            p.Title,
+            p.Description,
+            p.Price,
+            Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
+            Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+        }
+        ).Take(10).ToListAsync();
+
+        var response = new
+        {
+            success = true,
+            products
+
+        };
+
+        return Results.Json(response, statusCode: 200);
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+    }
+
+
+});
+
+productsRoutes.MapGet("/{productUUID}", async (string productUUID, StoreDBContext context) =>
+{
+    try
+    {
+        var findProduct = await context.Products.Where(p => p.ProductUuid == productUUID).Select(p => new
+        {
+
+            p.ProductUuid,
+            p.Title,
+            p.Description,
+            p.Price,
+            Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
+            Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+        }).FirstAsync();
+
+        var successResponse = new
+        {
+            success = true,
+            product = findProduct
+        };
+
+        return Results.Json(successResponse, statusCode: 200);
+    }
+    catch (Exception e)
+    {
+        var errResponse = new
+        {
+            success = false,
+        };
+        if (e.Message == "Sequence contains no elements.")
+        {
+            return Results.Json(new { success = false, message = "Product not found" }, statusCode: 404);
+        }
+        return Results.InternalServerError(e.Message);
+
+
+    }
+
+
 });
 
 app.MapRazorPages();

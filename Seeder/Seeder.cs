@@ -3,6 +3,7 @@ using ShoesStore.Entities;
 
 using ShoesStore.Entities.Models;
 using Bogus;
+using Bogus.Extensions;
 
 
 
@@ -18,127 +19,117 @@ public class Seeder()
     private readonly int ProductsNum = 20;
 
 
-    public void VendorsSeed(StoreDBContext context)
+    public async Task<int> VendorsSeed(StoreDBContext context)
 
     {
 
-        try
+
+        var vendorFaker = new Faker<Vendor>()
+        .StrictMode(false).Rules((faker, vendor) =>
+        {
+            vendor.VendorUuid = faker.Random.Uuid().ToString();
+            vendor.Name = faker.Company.CompanyName();
+
+
+        });
+
+
+        for (int i = 0; i < VendorsNum; i++)
         {
 
-
-            for (int i = 0; i < VendorsNum; i++)
-            {
-                var vendorFaker = new Faker<Vendor>()
-                .StrictMode(false).Rules((faker, vendor) =>
-                {
-                    vendor.VendorUuid = faker.Random.Uuid().ToString();
-                    vendor.Name = faker.Company.CompanyName();
-
-
-                });
-
-                Vendor newVendor = vendorFaker.Generate();
-                Console.Write(newVendor.VendorUuid + ",");
-                context.Vendors.Add(newVendor);
-                context.SaveChanges();
-
-
-            }
+            Vendor newVendor = vendorFaker.Generate();
+            Console.Write(newVendor.VendorUuid + ",");
+            await context.Vendors.AddAsync(newVendor);
 
 
 
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+
+        return await context.SaveChangesAsync();
+
+
+
 
 
 
 
 
     }
-    public void ProductsSeed(StoreDBContext context)
+    public async Task<int> ProductsSeed(StoreDBContext context)
     {
 
-        try
+        var productFaker = new Faker<Product>()
+        .StrictMode(false).Rules((faker, product) =>
+        {
+            var vendors = context.Vendors.ToList();
+            product.ProductUuid = faker.Random.Uuid().ToString();
+            product.Title = faker.Commerce.ProductName();
+            product.Price = faker.Finance.Amount(10, 150, 2);
+            product.Description = faker.Commerce.ProductDescription();
+            product.Vendor = faker.PickRandom<Vendor>(vendors);
+
+
+
+
+
+        });
+
+        for (int i = 0; i < ProductsNum; i++)
         {
 
 
+            Product newProduct = productFaker.Generate();
 
-            for (int i = 0; i < ProductsNum; i++)
-            {
-                var productFaker = new Faker<Product>()
-                .StrictMode(false).Rules((faker, product) =>
-
-                {
-                    var vendors = context.Vendors.ToList();
-                    product.ProductUuid = faker.Random.Uuid().ToString();
-                    product.Title = faker.Commerce.ProductName();
-                    product.Description = faker.Commerce.ProductDescription();
-                    product.Vendor = faker.PickRandom<Vendor>(vendors);
-
-
-
-
-
-                });
-
-                Product newProduct = productFaker.Generate();
-
-                context.Products.Add(newProduct);
-                context.SaveChanges();
-
-            }
+            await context.Products.AddAsync(newProduct);
 
 
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+
+        return await context.SaveChangesAsync();
+
+
+
+
 
 
 
     }
 
-    public void MediaSeed(StoreDBContext context)
+    public async Task<int> MediaSeed(StoreDBContext context)
     {
-        try
+
+
+        var products = context.Products.ToList();
+
+
+        for (int i = 0; i < products.Count; i++)
         {
 
-            var products = context.Products.ToList();
-
-            for (int i = 0; i < products.Count; i++)
+            var mediaFaker = new Faker<Media>()
+            .StrictMode(false)
+            .Rules((faker, media) =>
             {
 
-                var mediaFaker = new Faker<Media>()
-                        .StrictMode(false)
-                        .Rules((faker, media) =>
-                        {
+                media.Path = faker.Image.PicsumUrl(250, 250);
+                media.ProductId = i + 1;
 
-                            media.Path = faker.Image.PicsumUrl();
-                            media.Product = products[i];
+            });
 
-                        });
-
-                Media firstMedia = mediaFaker.Generate();
-                Media secondMedia = mediaFaker.Generate();
-                context.Media.Add(firstMedia);
-                context.Media.Add(secondMedia);
-                context.SaveChanges();
-
-
-            }
-
+            Media firstMedia = mediaFaker.Generate();
+            Media secondMedia = mediaFaker.Generate();
+            await context.Media.AddAsync(firstMedia);
+            await context.Media.AddAsync(secondMedia);
 
 
 
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
+        return await context.SaveChangesAsync();
+
+
+
+
+
+
 
 
 
