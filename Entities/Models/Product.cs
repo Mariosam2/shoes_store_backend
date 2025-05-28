@@ -1,7 +1,6 @@
 namespace ShoesStore.Entities.Models;
 
-using Bogus;
-using Microsoft.EntityFrameworkCore;
+
 
 public class Product
 {
@@ -9,6 +8,8 @@ public class Product
     public required string ProductUuid { get; set; }
     public required string Title { get; set; }
     public required string Description { get; set; }
+
+    public ICollection<Media>? Medias { get; set; } = null;
 
     public required Vendor Vendor { get; set; }
 

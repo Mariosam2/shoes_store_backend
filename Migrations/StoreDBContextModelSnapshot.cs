@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ShoesStore.Entities;
 
@@ -16,14 +17,18 @@ namespace ShoesStore.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.5")
+                .HasAnnotation("ProductVersion", "8.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
             modelBuilder.Entity("ShoesStore.Entities.Models.Media", b =>
                 {
                     b.Property<int>("MediaId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("MediaId"));
 
                     b.Property<string>("Path")
                         .IsRequired()
@@ -44,6 +49,8 @@ namespace ShoesStore.Migrations
                     b.Property<int>("OrderId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("OrderId"));
 
                     b.Property<DateTime?>("CanceledAt")
                         .HasColumnType("datetime(6)");
@@ -71,7 +78,7 @@ namespace ShoesStore.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Order");
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("ShoesStore.Entities.Models.Product", b =>
@@ -79,6 +86,8 @@ namespace ShoesStore.Migrations
                     b.Property<int>("ProductId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("ProductId"));
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -111,6 +120,8 @@ namespace ShoesStore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("UserId"));
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -142,6 +153,8 @@ namespace ShoesStore.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("VendorId"));
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -161,7 +174,7 @@ namespace ShoesStore.Migrations
             modelBuilder.Entity("ShoesStore.Entities.Models.Media", b =>
                 {
                     b.HasOne("ShoesStore.Entities.Models.Product", "Product")
-                        .WithMany()
+                        .WithMany("Medias")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -172,7 +185,7 @@ namespace ShoesStore.Migrations
             modelBuilder.Entity("ShoesStore.Entities.Models.Order", b =>
                 {
                     b.HasOne("ShoesStore.Entities.Models.User", "User")
-                        .WithMany()
+                        .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -183,12 +196,27 @@ namespace ShoesStore.Migrations
             modelBuilder.Entity("ShoesStore.Entities.Models.Product", b =>
                 {
                     b.HasOne("ShoesStore.Entities.Models.Vendor", "Vendor")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("ShoesStore.Entities.Models.Product", b =>
+                {
+                    b.Navigation("Medias");
+                });
+
+            modelBuilder.Entity("ShoesStore.Entities.Models.User", b =>
+                {
+                    b.Navigation("Orders");
+                });
+
+            modelBuilder.Entity("ShoesStore.Entities.Models.Vendor", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

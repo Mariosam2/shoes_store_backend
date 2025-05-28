@@ -7,4 +7,6 @@ public class Vendor
     public required string VendorUuid { get; set; }
     public required string Name { get; set; }
 
+    public ICollection<Product>? Products { get; set; } = null;
+
 }

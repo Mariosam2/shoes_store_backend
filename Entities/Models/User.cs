@@ -14,6 +14,8 @@ public class User
     public DateTime? DeletedAt { get; set; } = null;
     public string? Role { get; set; } = null;
 
+    public ICollection<Order>? Orders { get; set; } = null;
+
 
 
 
