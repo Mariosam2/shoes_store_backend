@@ -105,3 +105,6 @@ C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagge
 C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\ShoesStore.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\Stripe.net.dll
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll

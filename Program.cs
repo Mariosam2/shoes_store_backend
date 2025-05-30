@@ -8,6 +8,7 @@ using ShoesStore.Entities;
 using ShoesStore.Entities.Models;
 using ShoesStore.Seeder;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.FileProviders;
 
 string storeAllowedOrigins = "_storeAllowedOrigins";
 
@@ -53,6 +54,12 @@ var app = builder.Build();
 
 
 app.UseCors(storeAllowedOrigins);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+           Path.Combine(builder.Environment.ContentRootPath, "images")),
+    RequestPath = "/images"
+});
 app.UseSwagger();
 
 app.UseSwaggerUI(c =>

@@ -3,8 +3,8 @@ using ShoesStore.Entities;
 
 using ShoesStore.Entities.Models;
 using Bogus;
-using Bogus.Extensions;
 
+using Stripe;
 
 
 namespace ShoesStore.Seeder;
@@ -16,7 +16,7 @@ namespace ShoesStore.Seeder;
 public class Seeder()
 {
     private readonly int VendorsNum = 5;
-    private readonly int ProductsNum = 20;
+    private readonly int ProductsNum = 5;
 
 
     public async Task<int> VendorsSeed(StoreDBContext context)
@@ -58,7 +58,7 @@ public class Seeder()
     public async Task<int> ProductsSeed(StoreDBContext context)
     {
 
-        var productFaker = new Faker<Product>()
+        var productFaker = new Faker<Entities.Models.Product>()
         .StrictMode(false).Rules((faker, product) =>
         {
             var vendors = context.Vendors.ToList();
@@ -78,8 +78,12 @@ public class Seeder()
         {
 
 
-            Product newProduct = productFaker.Generate();
-
+            Entities.Models.Product newProduct = productFaker.Generate();
+            StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET");
+            Console.WriteLine(Environment.GetEnvironmentVariable("STRIPE_SECRET"));
+            var options = new ProductCreateOptions { Name = newProduct.Title, DefaultPriceData = { UnitAmountDecimal = newProduct.Price }, Description = newProduct.Description };
+            var service = new ProductService();
+            service.Create(options);
             await context.Products.AddAsync(newProduct);
 
 
@@ -98,27 +102,34 @@ public class Seeder()
     public async Task<int> MediaSeed(StoreDBContext context)
     {
 
-
+        string[] modelOneMedias = ["model-1-front.webp", "model-1-top.webp", "model-1-back.webp"];
+        string[] modelTwoMedias = ["model-2-front.webp", "model-2-top.webp", "model-2-back.webp"];
         var products = context.Products.ToList();
 
 
         for (int i = 0; i < products.Count; i++)
         {
+            Random random = new();
 
-            var mediaFaker = new Faker<Media>()
-            .StrictMode(false)
-            .Rules((faker, media) =>
+            var randMedias = random.Next(1, 3) == 1 ? modelOneMedias : modelTwoMedias;
+
+
+
+            for (int j = 0; j < randMedias.Length; j++)
             {
+                var mediaProduct = await context.Products.FindAsync(i + 1);
+                if (mediaProduct != null)
+                {
+                    string path = Environment.GetEnvironmentVariable("BASE_URL") + "/images/" + randMedias[i];
+                    Console.WriteLine(path);
+                    var newMedia = new Media { Path = path, ProductId = i + 1, Product = mediaProduct };
+                    await context.Media.AddAsync(newMedia);
+                }
+            }
 
-                media.Path = faker.Image.PicsumUrl(250, 250);
-                media.ProductId = i + 1;
 
-            });
 
-            Media firstMedia = mediaFaker.Generate();
-            Media secondMedia = mediaFaker.Generate();
-            await context.Media.AddAsync(firstMedia);
-            await context.Media.AddAsync(secondMedia);
+
 
 
 
