@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace ShoesStore.Entities.Models;
 
 
 public class Vendor
 {
     public int VendorId { get; set; }
+    [Column(TypeName = "varchar(255)")]
     public required string VendorUuid { get; set; }
     public required string Name { get; set; }
 

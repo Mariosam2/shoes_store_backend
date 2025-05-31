@@ -3,12 +3,14 @@
 
 
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
+using Stripe;
 using ShoesStore.Entities;
 using ShoesStore.Entities.Models;
 using ShoesStore.Seeder;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.FileProviders;
+using ShoesStore.Types;
+using Stripe.Checkout;
 
 string storeAllowedOrigins = "_storeAllowedOrigins";
 
@@ -44,16 +46,16 @@ builder.Services.AddCors((options) =>
 {
     options.AddPolicy(name: storeAllowedOrigins, builder =>
     {
-        builder.WithOrigins("http://localhost:4200");
+        builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod();
     });
 });
 
 
 var app = builder.Build();
 
-
-
 app.UseCors(storeAllowedOrigins);
+
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(
@@ -69,6 +71,8 @@ app.UseSwaggerUI(c =>
 
 
 var apiRoutes = app.MapGroup("/api/v1");
+
+
 
 
 
@@ -126,11 +130,88 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
     }
     catch (Exception e)
     {
-        Console.WriteLine(e);
+        //Console.WriteLine(e);
         return Results.InternalServerError(e.Message);
     }
 
 
+
+});
+
+
+
+
+
+apiRoutes.MapPost("create-checkout-session", async (StoreDBContext context, HttpRequest request) =>
+{
+
+    try
+    {
+        var reqBody = await request.ReadFromJsonAsync<CheckoutItems>();
+        if (reqBody != null)
+        {
+            var items = reqBody.Items;
+            var products = await context.Products.ToArrayAsync();
+            var itemsUuid = items.Select(i => i.ProductUUID);
+            var stripePriceIds = products.Where(p => itemsUuid.Contains(p.ProductUuid)).Select(p => p.StripePriceId).ToArray();
+            StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET");
+
+
+            var checkoutLineItems = new List<SessionLineItemOptions>();
+
+            for (int i = 0; i < stripePriceIds.Length; i++)
+
+            {
+
+                var priceId = stripePriceIds[i];
+                var quantity = items[i].Quantity;
+
+                var sessionLineItem = new SessionLineItemOptions
+                {
+                    Price = priceId,
+                    Quantity = quantity,
+                };
+
+                checkoutLineItems.Add(sessionLineItem);
+            }
+
+
+            string domain = Environment.GetEnvironmentVariable("CLIENT_URL");
+
+            var options = new SessionCreateOptions
+            {
+                UiMode = "custom",
+                ReturnUrl = domain + "/after-payment?session_id={CHECKOUT_SESSION_ID}",
+                LineItems = checkoutLineItems,
+                Mode = "payment",
+                PaymentMethodConfiguration = Environment.GetEnvironmentVariable("STRIPE_PAYMENT_CONFIG")
+            };
+
+            var service = new SessionService();
+            Session session = service.Create(options);
+            //onsole.WriteLine(session);
+
+            var successResponse = new
+            {
+                success = true,
+                clientSecret = session.ClientSecret
+            };
+
+            return Results.Json(successResponse, statusCode: 200);
+        }
+        var errorResponse = new
+        {
+            success = false,
+            message = "Wrong request body format"
+        };
+        return Results.Json(errorResponse, statusCode: 400);
+
+
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+    }
 
 });
 
@@ -210,6 +291,9 @@ productsRoutes.MapGet("/{productUUID}", async (string productUUID, StoreDBContex
 
 });
 
+
 app.MapRazorPages();
+
+
 
 app.Run();

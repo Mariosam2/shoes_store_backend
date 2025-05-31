@@ -29,7 +29,7 @@ public class StoreDBContext(DbContextOptions<StoreDBContext> options) : DbContex
 
         builder.Entity<Product>()
        .Property(p => p.Price)
-       .HasPrecision(3, 2);
+       .HasPrecision(5, 2);
 
 
 

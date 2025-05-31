@@ -74,16 +74,34 @@ public class Seeder()
 
         });
 
+
         for (int i = 0; i < ProductsNum; i++)
         {
 
 
             Entities.Models.Product newProduct = productFaker.Generate();
             StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET");
-            Console.WriteLine(Environment.GetEnvironmentVariable("STRIPE_SECRET"));
-            var options = new ProductCreateOptions { Name = newProduct.Title, DefaultPriceData = { UnitAmountDecimal = newProduct.Price }, Description = newProduct.Description };
+            //Console.WriteLine("{0} {1} {2}", newProduct.Title, newProduct.Price, newProduct.Description);
+
+
+            var options = new ProductCreateOptions
+            {
+                Name = newProduct.Title,
+                DefaultPriceData = new ProductDefaultPriceDataOptions
+                {
+                    //unitamount in cents, decimal doesnt work
+                    UnitAmount = Convert.ToInt64(newProduct.Price * 100),
+                    Currency = "eur"
+                },
+                Description = newProduct.Description,
+
+            };
+
             var service = new ProductService();
-            service.Create(options);
+            Stripe.Product product = await service.CreateAsync(options);
+            newProduct.StripePriceId = product.DefaultPriceId;
+            newProduct.StripeProductId = product.Id;
+
             await context.Products.AddAsync(newProduct);
 
 
@@ -114,13 +132,16 @@ public class Seeder()
             var randMedias = random.Next(1, 3) == 1 ? modelOneMedias : modelTwoMedias;
 
 
+            var mediaProduct = await context.Products.FindAsync(i + 1);
+
+
 
             for (int j = 0; j < randMedias.Length; j++)
             {
-                var mediaProduct = await context.Products.FindAsync(i + 1);
+
                 if (mediaProduct != null)
                 {
-                    string path = Environment.GetEnvironmentVariable("BASE_URL") + "/images/" + randMedias[i];
+                    string path = Environment.GetEnvironmentVariable("BASE_URL") + "/images/" + randMedias[j];
                     Console.WriteLine(path);
                     var newMedia = new Media { Path = path, ProductId = i + 1, Product = mediaProduct };
                     await context.Media.AddAsync(newMedia);

@@ -1,9 +1,12 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace ShoesStore.Entities.Models;
 
 
 public class Order
 {
     public int OrderId { get; set; }
+    [Column(TypeName = "varchar(255)")]
     public required string OrderUuid { get; set; }
 
     //TODO: add stripe id if needed
