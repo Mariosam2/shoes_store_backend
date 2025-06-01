@@ -215,14 +215,40 @@ apiRoutes.MapPost("create-checkout-session", async (StoreDBContext context, Http
 
 });
 
+
+apiRoutes.MapGet("/vendors", async (StoreDBContext context) =>
+{
+    try
+    {
+        var vendors = await context.Vendors.Select(v => new { v.VendorUuid, v.Name }).ToListAsync();
+        var successResponse = new
+        {
+            success = true,
+            vendors
+        };
+        return Results.Json(successResponse, statusCode: 200);
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+    }
+});
+
+
+
+
 var productsRoutes = apiRoutes.MapGroup("/products");
 
 productsRoutes.MapGet("/", async (StoreDBContext context, int page) =>
 {
     try
     {
+        int productsPerPage = 4;
+        int productsCount = await context.Products.CountAsync();
+        int productsPages = productsCount / productsPerPage + productsCount % productsPerPage;
+        Console.WriteLine(productsPages);
         int offset = page - 1;
-        var products = await context.Products.Where(p => p.ProductId > offset * 10).Select(p => new
+        var products = await context.Products.Where(p => p.ProductId > offset * 4).Select(p => new
         {
             p.ProductUuid,
             p.Title,
@@ -231,12 +257,13 @@ productsRoutes.MapGet("/", async (StoreDBContext context, int page) =>
             Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
             Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
         }
-        ).Take(10).ToListAsync();
+        ).Take(4).ToListAsync();
 
         var response = new
         {
             success = true,
-            products
+            products,
+            pages = productsPages
 
         };
 
@@ -289,6 +316,36 @@ productsRoutes.MapGet("/{productUUID}", async (string productUUID, StoreDBContex
     }
 
 
+});
+
+productsRoutes.MapGet("/search", async (StoreDBContext context, string query = "") =>
+{
+    try
+    {
+        var searchedProducts = await context.Products.Where(p => p.Title.Contains(query))
+                                                                        .Select(p => new { p.ProductUuid, p.Title, p.Price, image = p.Medias != null ? p.Medias.First().Path : null, })
+                                                                        .Take(5).ToListAsync();
+        //TODO: add categories
+
+        var successResponse = new
+        {
+            success = true,
+            results = new
+            {
+                products = searchedProducts,
+                categories = new List<string>()
+            }
+        };
+
+        return Results.Json(successResponse, statusCode: 200);
+
+
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+
+    }
 });
 
 
