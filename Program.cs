@@ -12,6 +12,7 @@ using Microsoft.Extensions.FileProviders;
 using ShoesStore.Types;
 using Stripe.Checkout;
 
+
 string storeAllowedOrigins = "_storeAllowedOrigins";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -100,6 +101,8 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
         if (vendorsCount == 0 && productsCount == 0 && mediaCount == 0)
         {
             await seeder.VendorsSeed(context);
+            await seeder.CategoriesSeed(context);
+            await seeder.SizesSeed(context);
             await seeder.ProductsSeed(context);
             await seeder.MediaSeed(context);
             var successResponse = new
@@ -130,7 +133,7 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
     }
     catch (Exception e)
     {
-        //Console.WriteLine(e);
+        Console.WriteLine(e);
         return Results.InternalServerError(e.Message);
     }
 
@@ -142,7 +145,7 @@ apiRoutes.MapPost("/seed", async (StoreDBContext context) =>
 
 
 
-apiRoutes.MapPost("create-checkout-session", async (StoreDBContext context, HttpRequest request) =>
+apiRoutes.MapPost("/create-checkout-session", async (StoreDBContext context, HttpRequest request) =>
 {
 
     try
@@ -215,12 +218,32 @@ apiRoutes.MapPost("create-checkout-session", async (StoreDBContext context, Http
 
 });
 
+apiRoutes.MapGet("/categories", async (StoreDBContext context) =>
+{
+    try
+    {
+        var categories = await context.Categories.Where(c => c.Products != null && c.Products.Count != 0).Select(c => new { c.CategoryUuid, c.Name }).ToListAsync();
+        var successResponse = new
+        {
+            success = true,
+            categories
+        };
+        return Results.Json(successResponse, statusCode: 200);
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+    }
+});
+
+
+
 
 apiRoutes.MapGet("/vendors", async (StoreDBContext context) =>
 {
     try
     {
-        var vendors = await context.Vendors.Select(v => new { v.VendorUuid, v.Name }).ToListAsync();
+        var vendors = await context.Vendors.Where(v => v.Products != null && v.Products.Count != 0).Select(v => new { v.VendorUuid, v.Name }).ToListAsync();
         var successResponse = new
         {
             success = true,
@@ -236,6 +259,130 @@ apiRoutes.MapGet("/vendors", async (StoreDBContext context) =>
 
 
 
+apiRoutes.MapGet("/filter", async (StoreDBContext context, int? price, string? vendors, string? categories) =>
+{
+    try
+    {
+
+
+        var filterQuery = context.Products.AsQueryable<ShoesStore.Entities.Models.Product>();
+        if (price != null)
+
+        {
+            if (price is int)
+            {
+                filterQuery = filterQuery.Where(p => p.Price > price);
+            }
+            else
+            {
+                var errorResponse = new
+                {
+                    success = false,
+                    message = "The price is not an integer"
+                };
+                return Results.Json(errorResponse, statusCode: 400);
+            }
+
+        }
+
+        if (vendors != null && vendors.Trim() != "")
+        {
+
+            string[] vendorsArr = vendors.Split(',');
+            bool isVendorsValid = true;
+            foreach (var vendor in vendorsArr)
+            {
+                if (!Guid.TryParse(vendor, out _))
+                {
+                    isVendorsValid = false;
+                    break;
+                }
+
+            }
+
+            if (isVendorsValid)
+            {
+                filterQuery = filterQuery.Where(p => vendorsArr.Contains(p.Vendor.VendorUuid));
+            }
+            else
+            {
+                var errorResponse = new
+                {
+                    success = false,
+                    message = "The vendors passed are in a wrong format"
+                };
+                return Results.Json(errorResponse, statusCode: 400);
+            }
+
+        }
+
+        if (categories != null && categories.Trim() != "")
+        {
+
+            string[] categoriesArr = categories.Split(',');
+            bool isCategoriesValid = true;
+            foreach (var category in categoriesArr)
+            {
+                if (!Guid.TryParse(category, out _))
+                {
+                    isCategoriesValid = false;
+                    break;
+                }
+
+            }
+
+            if (isCategoriesValid)
+            {
+                filterQuery = filterQuery.Where(p => categoriesArr.Contains(p.Category.CategoryUuid));
+            }
+            else
+            {
+                var errorResponse = new
+                {
+                    success = false,
+                    message = "The vendors passed are in a wrong format"
+                };
+                return Results.Json(errorResponse, statusCode: 400);
+            }
+
+        }
+
+
+        var filteredResults = await filterQuery.Select(p => new
+        {
+            p.ProductUuid,
+            p.Title,
+            p.Description,
+            p.Price,
+            Category = p.Category.Name,
+            Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
+            Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+            Sizes = p.Sizes.Select(s => new { s.SizeNumber }),
+        }).ToListAsync();
+
+
+        var successResponse = new
+        {
+            success = true,
+            filteredResults
+        };
+
+        return Results.Json(successResponse, statusCode: 200);
+
+    }
+    catch (Exception e)
+    {
+        return Results.InternalServerError(e.Message);
+    }
+
+
+
+});
+
+
+
+
+
 
 var productsRoutes = apiRoutes.MapGroup("/products");
 
@@ -243,21 +390,23 @@ productsRoutes.MapGet("/", async (StoreDBContext context, int page) =>
 {
     try
     {
-        int productsPerPage = 4;
+        int productsPerPage = 8;
         int productsCount = await context.Products.CountAsync();
         int productsPages = productsCount / productsPerPage + productsCount % productsPerPage;
         Console.WriteLine(productsPages);
         int offset = page - 1;
-        var products = await context.Products.Where(p => p.ProductId > offset * 4).Select(p => new
+        var products = await context.Products.Where(p => p.ProductId > offset * productsPerPage).Select(p => new
         {
             p.ProductUuid,
             p.Title,
             p.Description,
             p.Price,
+            Category = p.Category.Name,
             Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
             Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+            Sizes = p.Sizes.Select(s => new { s.SizeNumber }),
         }
-        ).Take(4).ToListAsync();
+        ).Take(productsPerPage).ToListAsync();
 
         var response = new
         {
@@ -283,13 +432,14 @@ productsRoutes.MapGet("/{productUUID}", async (string productUUID, StoreDBContex
     {
         var findProduct = await context.Products.Where(p => p.ProductUuid == productUUID).Select(p => new
         {
-
             p.ProductUuid,
             p.Title,
             p.Description,
             p.Price,
+            Category = p.Category.Name,
             Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
             Medias = p.Medias != null ? p.Medias.Select(m => new { m.Path }) : null,
+            Sizes = p.Sizes.Select(s => new { s.SizeNumber }),
         }).FirstAsync();
 
         var successResponse = new
@@ -318,14 +468,25 @@ productsRoutes.MapGet("/{productUUID}", async (string productUUID, StoreDBContex
 
 });
 
+
 productsRoutes.MapGet("/search", async (StoreDBContext context, string query = "") =>
 {
     try
     {
         var searchedProducts = await context.Products.Where(p => p.Title.Contains(query))
-                                                                        .Select(p => new { p.ProductUuid, p.Title, p.Price, image = p.Medias != null ? p.Medias.First().Path : null, })
-                                                                        .Take(5).ToListAsync();
-        //TODO: add categories
+                                                                    .Select(p => new
+                                                                    {
+                                                                        p.ProductUuid,
+                                                                        p.Title,
+                                                                        p.Description,
+                                                                        p.Price,
+                                                                        Category = p.Category.Name,
+                                                                        Vendor = new { p.Vendor.VendorUuid, p.Vendor.Name },
+                                                                        Image = p.Medias != null ? p.Medias.Select(m => new { m.Path }).First().Path : null,
+                                                                        Sizes = p.Sizes.Select(s => new { s.SizeNumber }),
+                                                                    })
+                                                                            .Take(5).ToListAsync();
+
 
         var successResponse = new
         {
@@ -333,7 +494,6 @@ productsRoutes.MapGet("/search", async (StoreDBContext context, string query = "
             results = new
             {
                 products = searchedProducts,
-                categories = new List<string>()
             }
         };
 

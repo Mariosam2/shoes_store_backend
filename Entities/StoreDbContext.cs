@@ -12,6 +12,8 @@ public class StoreDBContext(DbContextOptions<StoreDBContext> options) : DbContex
     public DbSet<Vendor> Vendors { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<Order> Orders { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Size> Sizes { get; set; }
     public DbSet<Media> Media { get; set; }
 
 

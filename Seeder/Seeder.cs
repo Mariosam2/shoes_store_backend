@@ -5,6 +5,7 @@ using ShoesStore.Entities.Models;
 using Bogus;
 
 using Stripe;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace ShoesStore.Seeder;
@@ -16,7 +17,9 @@ namespace ShoesStore.Seeder;
 public class Seeder()
 {
     private readonly int VendorsNum = 5;
-    private readonly int ProductsNum = 5;
+    private readonly int CategoriesNum = 5;
+    private readonly int SizesNum = 5;
+    private readonly int ProductsNum = 20;
 
 
     public async Task<int> VendorsSeed(StoreDBContext context)
@@ -55,18 +58,77 @@ public class Seeder()
 
 
     }
+
+
+    public async Task<int> CategoriesSeed(StoreDBContext context)
+    {
+        var categoryFaker = new Faker<Category>()
+               .StrictMode(false).Rules((faker, category) =>
+               {
+                   category.CategoryUuid = faker.Random.Uuid().ToString();
+                   category.Name = faker.Commerce.Categories(1)[0];
+
+
+               });
+
+
+        for (int i = 0; i < CategoriesNum; i++)
+        {
+
+            Category newCategory = categoryFaker.Generate();
+            await context.Categories.AddAsync(newCategory);
+
+
+
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+
+    public async Task<int> SizesSeed(StoreDBContext context)
+    {
+        var sizeFaker = new Faker<Size>()
+               .StrictMode(false).Rules((faker, size) =>
+               {
+                   size.SizeUuid = faker.Random.Uuid().ToString();
+                   size.SizeNumber = faker.Random.Int(16, 50);
+
+
+               });
+
+
+        for (int i = 0; i < SizesNum; i++)
+        {
+
+            Size newSize = sizeFaker.Generate();
+            await context.Sizes.AddAsync(newSize);
+
+
+
+        }
+
+        return await context.SaveChangesAsync();
+    }
+
+
+
     public async Task<int> ProductsSeed(StoreDBContext context)
     {
-
+        var vendors = await context.Vendors.ToListAsync();
+        var categories = await context.Categories.ToListAsync();
+        var sizes = await context.Sizes.ToListAsync();
         var productFaker = new Faker<Entities.Models.Product>()
         .StrictMode(false).Rules((faker, product) =>
         {
-            var vendors = context.Vendors.ToList();
+
             product.ProductUuid = faker.Random.Uuid().ToString();
             product.Title = faker.Commerce.ProductName();
             product.Price = faker.Finance.Amount(10, 150, 2);
             product.Description = faker.Commerce.ProductDescription();
             product.Vendor = faker.PickRandom<Vendor>(vendors);
+            product.Category = faker.PickRandom<Category>(categories);
+            product.Sizes = sizes;
 
 
 
@@ -116,6 +178,7 @@ public class Seeder()
 
 
     }
+
 
     public async Task<int> MediaSeed(StoreDBContext context)
     {

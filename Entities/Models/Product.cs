@@ -23,6 +23,10 @@ public class Product
 
     public ICollection<Media>? Medias { get; set; } = null;
 
+    public required Category Category { get; set; }
+
+    public required ICollection<Size> Sizes { get; set; }
+
     public required Vendor Vendor { get; set; }
 
 
