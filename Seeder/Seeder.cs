@@ -14,7 +14,7 @@ namespace ShoesStore.Seeder;
 
 
 
-public class Seeder()
+public class Seed
 {
     private readonly int VendorsNum = 5;
     private readonly int CategoriesNum = 5;
