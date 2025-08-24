@@ -22,8 +22,15 @@
     <PackageReference Include="Stripe.net" Version="48.2.0" />
     
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.4" />
+    <UpToDateCheckBuilt Include="wwwroot/css/input.css" Set="Css" />
+    <UpToDateCheckBuilt Include="tailwind.config.js" Set="Css" />
 
-  
+
   </ItemGroup>
+
+
+  <Target Name="Tailwind" BeforeTargets="Build">
+    <Exec Command="npm run css:build"/>
+  </Target>
 
 </Project>

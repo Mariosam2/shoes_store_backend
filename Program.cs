@@ -48,10 +48,20 @@ builder.Services.AddCors((options) =>
 });
 
 
+builder.Services.AddAuthentication("CookieAuth")
+    .AddCookie("CookieAuth", options =>
+    {
+        options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/Login";
+    });
+
+builder.Services.AddAuthorization();
+
+
 var app = builder.Build();
 
 app.UseCors(storeAllowedOrigins);
-
+app.UseStaticFiles();
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -75,6 +85,8 @@ FiltersRouter.Map(apiRoutes);
 
 var productsRoutes = apiRoutes.MapGroup("/products");
 ProductRouter.Map(productsRoutes);
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorPages();
 

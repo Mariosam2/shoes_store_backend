@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* @font-face {
+  font-family: "Tokyo Regular";
+  src: url("../fonts/tokyo_regular/tokyoregular-3lmq6.ttf") format("truetype"),
+    url("../fonts/tokyo_regular/tokyoregular-3lmq6-webfont.woff") format("woff"),
+    url("../fonts/tokyo_regular/tokyoregular-3lmq6-webfont.woff2") format("woff2");
+  font-weight: 400, 500, 600, 700, 800, 900;
+} */
+
+@font-face {
+  font-family: "Tokyo 2097";
+  src: url("../fonts/tokyo_2097/Tokyo2097-7RYP.ttf") format("truetype");
+}
+@theme {
+  --color-ms-muted: #bbb8bb;
+  --color-ms-dark: #343434;
+  --color-ms-darker: #28282b;
+  --color-ms-white: #faf9f6;
+  --color-ms-orange: #ff7f50;
+  --color-ms-off-white: #ffffff;
+}
+
+body {
+  background-color: var(--color-ms-white);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Tokyo 2097", "sans-serif";
+  font-weight: 600;
+  font-style: normal;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  border-radius: 0.3rem;
+}
+
+.btn-primary {
+  background-color: var(--color-ms-orange);
+  color: var(--color-ms-off-white);
+}
+
+.ms-shadow,
+.btn:hover {
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus,
+input:focus-visible,
+input:focus-visible {
+  outline: none;
+}

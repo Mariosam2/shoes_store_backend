@@ -108,3 +108,17 @@ C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\ShoesStore.MvcApplicationPart
 C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\Stripe.net.dll
 C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\System.Configuration.ConfigurationManager.dll
 C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\package-lock.json
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\package.json
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\ShoesStore.staticwebassets.runtime.json
+C:\Users\marco\Desktop\ShoesStore\bin\Debug\net9.0\tailwind.config.json
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\9no7lxk5sf-xqkh6m7xng.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\9crysh0mv1-xs32wvlcol.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\up742hj2yb-jobbm17liw.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\v92x3t2lix-9jk2nugari.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\42jw937fja-jzub9owsgj.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\yb032655ma-5bg6n0vx53.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\duvb9q1oe8-0fwqvv1x9u.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\ptq4lm6252-mfknq79yi6.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\c4gfglp6kd-71ajvcq93n.gz
+C:\Users\marco\Desktop\ShoesStore\obj\Debug\net9.0\compressed\yeymz9uzwu-cjf4ohyxtf.gz

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ShoesStore.Entities;
 using ShoesStore.Entities.Models;
 using ShoesStore.Seeder;
+using Microsoft.AspNetCore.Identity;
 namespace ShoesStore.Routers;
 
 
@@ -17,12 +18,18 @@ public class SeederRouter
 
             try
             {
+
+                var passwordHasher = new PasswordHasher<User>();
                 var seeder = new Seed();
                 //Seed the admin if not present
                 var admin = context.Users.FirstOrDefault(user => user.Username == "admin");
                 if (admin == null)
                 {
                     var newAdmin = new User { Username = "admin", Password = "admin", Role = "admin" };
+
+                    newAdmin.Password = passwordHasher.HashPassword(newAdmin, newAdmin.Password);
+
+
                     context.Users.Add(newAdmin);
                     await context.SaveChangesAsync();
 
